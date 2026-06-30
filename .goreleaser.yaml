@@ -1,0 +1,62 @@
+version: 2
+
+project_name: jspect
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: jspect
+    binary: jspect
+    main: .
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - id: jspect-archive
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - logo.svg
+      - sample.js
+      - analyze.conf
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  github:
+    owner: roy0x01
+    name: jspect
+  name_template: "jspect {{ .Version }}"
+  footer: |
+    ## Install
+
+    ```bash
+    go install github.com/roy0x01/jspect@latest
+    ```
+
+    Or download the binary for your platform below.

@@ -1,0 +1,81 @@
+name: release (manual build)
+
+# Disabled by default — rename this file to release.yml (replacing the
+# GoReleaser-based one) if you'd rather not depend on goreleaser-action.
+# Triggers on the same v* tag push, builds 5 platform binaries with plain
+# `go build`, and uploads them to a GitHub Release with zero third-party
+# build tooling.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Build binaries
+        run: |
+          mkdir -p dist
+          VERSION="${GITHUB_REF_NAME}"
+
+          build() {
+            local goos=$1 goarch=$2 ext=$3
+            local name="jspect_${goos}_${goarch}"
+            echo "building $name"
+            GOOS=$goos GOARCH=$goarch CGO_ENABLED=0 \
+              go build -ldflags="-s -w -X main.version=${VERSION}" \
+              -o "dist/jspect${ext}" .
+
+            if [ "$goos" = "windows" ]; then
+              cd dist && zip "${name}.zip" "jspect${ext}" && rm "jspect${ext}" && cd ..
+            else
+              cd dist && tar -czf "${name}.tar.gz" "jspect${ext}" && rm "jspect${ext}" && cd ..
+            fi
+          }
+
+          build linux   amd64 ""
+          build linux   arm64 ""
+          build darwin  amd64 ""
+          build darwin  arm64 ""
+          build windows amd64 ".exe"
+
+      - name: Copy extra files into release notes context
+        run: |
+          cp README.md logo.svg sample.js analyze.conf dist/ || true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum *.tar.gz *.zip > checksums.txt 2>/dev/null || true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/checksums.txt
+          generate_release_notes: true
+          body: |
+            ## Install
+
+            ```bash
+            go install github.com/roy0x01/jspect@latest
+            ```
+
+            Or download the binary for your platform below.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
