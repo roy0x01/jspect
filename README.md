@@ -4,7 +4,7 @@
 
 # jspect
 
-**JavaScript formatter and recon scanner for daily terminal use**
+**Beautify and recon JS from the terminal**
 
 ![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-4ade80?style=flat-square)
@@ -66,7 +66,7 @@ Works on both clean and minified/obfuscated JS — expands single-line bundles i
 jspect app.js --analyze
 ```
 
-The default rule set lives in [`analyze.conf`](analyze.conf) at the repo root — a plain text file, easy to read and PR against. It's embedded into the binary at build time, so `go install` works standalone with no extra files needed. On first run, it's copied to `~/.jspect/analyze.conf` covering:
+On first run, a default rule set is created at `~/.jspect/analyze.conf` covering:
 
 - **Endpoints** — API paths, HTTP client calls (`fetch`, `axios`, `$.ajax`, `.get/.post/...`), template literal paths
 - **URLs** — absolute URLs, WebSocket endpoints, S3/Azure/GCS buckets
